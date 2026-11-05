@@ -1,9 +1,23 @@
 # 依赖
 node_modules/
 
+# 构建产物与本地离线包
+dist/
+*.zip
+*.tar.gz
+
 # VitePress 构建产物与缓存
 docs/.vitepress/dist/
 docs/.vitepress/cache/
 
-# 系统文件
+# 运行时数据库与日志
+db.json
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 系统与编辑器文件
 .DS_Store
+.idea/
+

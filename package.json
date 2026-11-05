@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vitepress dev docs",
     "build": "vitepress build docs",
-    "preview": "vitepress preview docs"
+    "preview": "vitepress preview docs",
+    "build:nodejs": "npm --prefix CatPawOpen/nodejs run build",
+    "pack:nodejs": "npm --prefix CatPawOpen/nodejs run pack"
   },
   "devDependencies": {
     "vitepress": "^1.6.3"
