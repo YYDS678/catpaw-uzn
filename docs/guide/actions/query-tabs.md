@@ -15,7 +15,9 @@
 
 ```json
 {
-    "tabs": [
+    "success": true,
+    "message": "success",
+    "data": [
         {
             "id": "home",
             "title": "首页",
@@ -40,12 +42,19 @@
 }
 ```
 
-### 字段说明
+### 顶层响应字段
 
 | 字段 | 类型 | 说明 |
 | :--- | :---: | :--- |
-| `tabs` | Array | 用户已开启的 Tab 列表（按开启顺序排列，关闭的 Tab 不返回） |
-| └─ `id` | String | Tab 唯一标识符（如 `home`, `live`, `calendar`, `history`, `search`, `settings`） |
-| └─ `title` | String | Tab 中文显示标题 |
-| └─ `selected` | Boolean | 当前是否处于激活选中状态 |
+| `success` | Boolean | 操作是否成功 |
+| `message` | String | 提示或状态说明（可能为空） |
+| `data` | Array | 用户已开启的 Tab 列表（按开启顺序排列，关闭的 Tab 不返回） |
+
+### data 数组项字段说明
+
+| 字段 | 类型 | 说明 |
+| :--- | :---: | :--- |
+| `id` | String | Tab 唯一标识符（如 `home`, `live`, `calendar`, `history`, `search`, `settings`） |
+| `title` | String | Tab 中文显示标题 |
+| `selected` | Boolean | 当前是否处于激活选中状态 |
 

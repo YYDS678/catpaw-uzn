@@ -19,4 +19,8 @@ features:
     title: Action 调用
     details: 壳子提供给源调用的扩展方法
     link: /guide/actions/
+  - icon: 📜
+    title: 变更记录
+    details: 按年月日跟踪协议规范、Action 契约与示例工程的更新历史。
+    link: /guide/changelog
 ---

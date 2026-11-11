@@ -23,3 +23,4 @@ CatPaw-UZN 壳子通过一套标准的 HTTP 接口协议加载站源（猫源）
 1. 先了解[配置 /config](/guide/config)，明白源是如何被声明和加载的
 2. 再逐个熟悉[站源接口](/guide/source-api/)的入参与返回值
 3. 需要与壳子交互（如弹幕、提示、打开网页）时查阅[Action 列表](/guide/actions/)
+4. 了解最新的协议演进与规范调整，请参阅[变更记录](/guide/changelog)

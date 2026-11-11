@@ -302,7 +302,25 @@ async function handleAction(inReq, _outResp) {
             opt: opt,
         }, inReq);
 
+        let parsedResult = result;
+        if (typeof parsedResult === 'string') {
+            try {
+                parsedResult = JSON.parse(parsedResult);
+            } catch (_) {}
+        }
+
         const inApp = (typeof globalThis.catDartServerPort === 'function' ? globalThis.catDartServerPort() : 0) > 0;
+
+        // 若客户端返回了标准的 { success, message, data } 封套，直接透明透传
+        if (parsedResult && typeof parsedResult === 'object' && typeof parsedResult.success === 'boolean') {
+            return {
+                ...parsedResult,
+                action: actionName,
+                opt: opt,
+                inApp: inApp,
+                result: parsedResult,
+            };
+        }
 
         return {
             success: true,
@@ -453,7 +471,8 @@ async function apiVideos(inReq, _outResp) {
 
 /**
  * 健壮解析客户端 messageToDart({ action: 'queryHistory' }) 返回的真实播放记录
- * 兼容数组直接返回、字符串 JSON、{ data: [...] }、{ list: [...] }、{ result: [...] } 等多种数据形态
+ * 优先遵循标准封套: { success: true, message: '...', data: [...] }
+ * 兼容数组直接返回、字符串 JSON、{ data: [...] }、{ list: [...] }、{ result: [...] } 等多种历史形态
  * @param {any} res
  * @returns {Array}
  */
@@ -467,8 +486,15 @@ function extractHistoryList(res) {
             return [];
         }
     }
-    if (Array.isArray(res)) return res;
+    // 1. 若遵循标准封套且明确指示失败/未授权
+    if (res && typeof res === 'object' && res.success === false) {
+        console.warn('[queryHistory] 客户端返回失败或未授权:', res.message || '未知原因');
+        return [];
+    }
+    // 2. 标准封套规范字段：res.data 是数组
     if (res && Array.isArray(res.data)) return res.data;
+    // 3. 兼容历史或变体形态
+    if (Array.isArray(res)) return res;
     if (res && Array.isArray(res.list)) return res.list;
     if (res && Array.isArray(res.result)) return res.result;
     if (res && res.data && Array.isArray(res.data.list)) return res.data.list;
@@ -490,17 +516,32 @@ async function apiHistory(inReq, _outResp) {
             opt: { count },
         }, inReq);
 
-        const list = extractHistoryList(res);
-        console.log(`[apiHistory] 客户端返回数据解析完成，有效记录数: ${list.length}`);
+        let parsed = res;
+        if (typeof parsed === 'string') {
+            try {
+                parsed = JSON.parse(parsed);
+            } catch (_) {}
+        }
+
+        const isEnvelope = parsed && typeof parsed === 'object' && typeof parsed.success === 'boolean';
+        const list = extractHistoryList(parsed);
+        const success = isEnvelope ? parsed.success : true;
+        const message = isEnvelope
+            ? (parsed.message || (success ? 'queryHistory success' : 'queryHistory failed'))
+            : (list.length > 0 ? 'queryHistory success' : 'no history');
+
+        console.log(`[apiHistory] 客户端返回数据解析完成: success=${success}, 记录数=${list.length}`);
         return {
-            success: true,
+            success,
+            message,
             count: list.length,
             list,
+            data: list,
             rawType: typeof res,
         };
     } catch (e) {
         console.error('[apiHistory] 请求异常:', e.message);
-        return { success: false, count: 0, list: [], message: e.message };
+        return { success: false, message: e.message, count: 0, list: [], data: [] };
     }
 }
 
@@ -512,13 +553,28 @@ async function historyAction(inReq, _outResp) {
         opt: { count },
     }, inReq);
 
-    const list = extractHistoryList(res);
+    let parsed = res;
+    if (typeof parsed === 'string') {
+        try {
+            parsed = JSON.parse(parsed);
+        } catch (_) {}
+    }
+
+    const isEnvelope = parsed && typeof parsed === 'object' && typeof parsed.success === 'boolean';
+    const list = extractHistoryList(parsed);
+    const success = isEnvelope ? parsed.success : true;
+    const message = isEnvelope
+        ? (parsed.message || (success ? 'queryHistory success' : 'queryHistory failed'))
+        : 'queryHistory success';
+
     return {
-        success: true,
+        success,
+        message,
         action: 'queryHistory',
         opt: { count },
         count: list.length,
         list,
+        data: list,
     };
 }
 
@@ -860,13 +916,32 @@ function renderWebPage({ prefix, categories: classList, initialVideos, pageInfo,
 
         .history-badge {
             position: absolute;
-            bottom: 4px;
+            bottom: 7px;
             right: 4px;
             background: rgba(0, 0, 0, 0.75);
             color: #e2e8f0;
             font-size: 10px;
             padding: 2px 5px;
             border-radius: 4px;
+            z-index: 1;
+        }
+
+        .history-progress-track {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 3px;
+            background: rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            z-index: 2;
+        }
+
+        .history-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #6366f1, #ec4899);
+            border-radius: 0 2px 2px 0;
+            transition: width 0.3s ease;
         }
 
         .history-play-icon {
@@ -885,6 +960,7 @@ function renderWebPage({ prefix, categories: classList, initialVideos, pageInfo,
             color: #fff;
             font-size: 10px;
             transition: all 0.2s ease;
+            z-index: 1;
         }
 
         .history-card:hover .history-play-icon {
@@ -905,13 +981,33 @@ function renderWebPage({ prefix, categories: classList, initialVideos, pageInfo,
             color: var(--text-main);
         }
 
+        .history-sub-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 4px;
+            margin-top: 3px;
+        }
+
         .history-sub {
             font-size: 10px;
             color: var(--text-muted);
-            margin-top: 2px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            flex: 1;
+        }
+
+        .history-progress-pill {
+            font-size: 9px;
+            color: #a5b4fc;
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.25);
+            padding: 1px 4px;
+            border-radius: 3px;
+            white-space: nowrap;
+            font-weight: 500;
+            flex-shrink: 0;
         }
 
         /* 分类导航栏 */
@@ -1639,7 +1735,20 @@ function renderWebPage({ prefix, categories: classList, initialVideos, pageInfo,
             }
         }
 
-        // 渲染最近在看历史记录
+        // 格式化时间为 mm:ss 或 hh:mm:ss
+        function formatDuration(seconds) {
+            const sec = Math.max(0, Math.floor(Number(seconds) || 0));
+            const m = Math.floor(sec / 60);
+            const s = sec % 60;
+            if (m >= 60) {
+                const h = Math.floor(m / 60);
+                const remM = m % 60;
+                return (h < 10 ? '0' + h : h) + ':' + (remM < 10 ? '0' + remM : remM) + ':' + (s < 10 ? '0' + s : s);
+            }
+            return (m < 10 ? '0' + m : m) + ':' + (s < 10 ? '0' + s : s);
+        }
+
+        // 渲染最近在看历史记录（支持展示原生播放进度条与百分比）
         function renderHistory(hist) {
             const histSec = document.getElementById('history-section');
             const histScroll = document.getElementById('history-scroll');
@@ -1656,6 +1765,17 @@ function renderWebPage({ prefix, categories: classList, initialVideos, pageInfo,
                 const pic = item.vod_pic || item.pic || item.vodPic || item.cover || FALLBACK_POSTER;
                 const ep = item.episode_name || item.ep || item.epName || item.episode || item.vod_remarks || item.remarks || '观看记录';
                 const line = item.line_from || item.line || item.lineFrom || item.source || '';
+                const progressSec = Number(item.progress_seconds || item.progressSeconds || 0);
+                const durationSec = Number(item.duration_seconds || item.durationSeconds || 0);
+
+                let progressPercent = 0;
+                let progressText = '';
+                if (durationSec > 0 && progressSec > 0) {
+                    progressPercent = Math.min(100, Math.max(1, Math.round((progressSec / durationSec) * 100)));
+                    progressText = progressPercent >= 98 ? '已看完' : (progressPercent + '%');
+                } else if (progressSec > 0) {
+                    progressText = formatDuration(progressSec);
+                }
 
                 return \`
                 <div class="history-card" onclick="openHistoryCard(\${idx})" title="点击查看详情">
@@ -1663,28 +1783,40 @@ function renderWebPage({ prefix, categories: classList, initialVideos, pageInfo,
                         <img class="history-thumb" src="\${pic}" alt="\${name}" loading="lazy" onerror="this.onerror=null;this.src='\${FALLBACK_POSTER}';">
                         <span class="history-badge">\${ep}</span>
                         <div class="history-play-icon" onclick="playHistoryCard(\${idx}, event)" title="立即播放">▶</div>
+                        \${progressPercent > 0 ? \`
+                        <div class="history-progress-track">
+                            <div class="history-progress-bar" style="width: \${progressPercent}%;"></div>
+                        </div>\` : ''}
                     </div>
                     <div class="history-info">
                         <div class="history-name" title="\${name}">\${name}</div>
-                        \${line ? \`<div class="history-sub">\${line}</div>\` : ''}
+                        <div class="history-sub-row">
+                            <span class="history-sub">\${line || '最近观看'}</span>
+                            \${progressText ? \`<span class="history-progress-pill">\${progressText}</span>\` : ''}
+                        </div>
                     </div>
                 </div>
                 \`;
             }).join('');
         }
 
-        // 从客户端异步拉取历史记录
+        // 从客户端异步拉取历史记录（严格处理标准响应封套）
         async function loadHistory(showToastFeedback = false) {
             try {
                 if (showToastFeedback) showToast('正在向客户端读取观看记录...', true);
                 const res = await fetch(API_PREFIX + '/api/history?count=10');
                 const data = await res.json();
                 console.log('[loadHistory result]:', data);
-                if (data.success && Array.isArray(data.list) && data.list.length > 0) {
-                    renderHistory(data.list);
-                    if (showToastFeedback) showToast('成功读取到 ' + data.list.length + ' 条最近观看', true);
+                const list = data.data || data.list || [];
+                if (data.success && Array.isArray(list) && list.length > 0) {
+                    renderHistory(list);
+                    if (showToastFeedback) showToast('成功读取到 ' + list.length + ' 条最近观看', true);
                 } else if (showToastFeedback) {
-                    showToast('客户端未返回观看记录(共 0 条)', false);
+                    if (data.success === false) {
+                        showToast('读取观看记录失败: ' + (data.message || '未授权或异常'), false);
+                    } else {
+                        showToast('客户端未返回观看记录(共 0 条)', false);
+                    }
                 }
             } catch (e) {
                 console.error('[loadHistory error]:', e.message);
@@ -1832,6 +1964,10 @@ async function test(inReq, outResp) {
         // 验证 API 视频分页检索接口
         resp = await inReq.server.inject().get(`${prefix}/api/videos?page=1`);
         dataResult.apiVideos = { statusCode: resp.statusCode, count: resp.json()?.list?.length || 0 };
+
+        // 验证客户端观看历史接口 (遵循标准响应封套)
+        resp = await inReq.server.inject().get(`${prefix}/api/history?count=5`);
+        dataResult.apiHistory = resp.json();
 
         resp = await inReq.server.inject().post(`${prefix}/home`);
         dataResult.home = resp.json();

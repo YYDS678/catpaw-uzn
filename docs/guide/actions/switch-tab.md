@@ -26,7 +26,9 @@
 ```json
 {
     "success": true,
-    "current": "settings"
+    "data": {
+        "current": "settings"
+    }
 }
 ```
 
@@ -35,8 +37,16 @@
 ```json
 {
     "success": false,
-    "current": "home",
     "message": "Tab not found or not enabled"
 }
 ```
+
+### 字段说明
+
+| 字段 | 类型 | 说明 |
+| :--- | :---: | :--- |
+| `success` | Boolean | 是否切换成功 |
+| `message` | String | 错误说明信息（仅失败时返回） |
+| `data` | Object | 切换结果数据（仅成功时返回） |
+| └─ `current` | String | 当前激活生效的 Tab ID |
 

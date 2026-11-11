@@ -2,6 +2,8 @@
 
 CatPaw UZN 文档体系与服务端运行组件仓库。
 
+> 📖 **在线静态文档站点**：[https://yyds678.github.io/catpaw-uzn/](https://yyds678.github.io/catpaw-uzn/)
+
 ---
 
 ## 仓库结构
@@ -22,6 +24,8 @@ catpaw-uzn/
 ## 常用操作指南
 
 ### 1. 文档开发与预览 (VitePress)
+
+- 静态网站在线地址：[https://yyds678.github.io/catpaw-uzn/](https://yyds678.github.io/catpaw-uzn/)
 
 ```bash
 # 启动本地文档开发服务器

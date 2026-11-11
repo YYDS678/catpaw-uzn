@@ -18,7 +18,8 @@ export default defineConfig({
     nav: [
       { text: '文档', link: '/guide/overview' },
       { text: '站源接口', link: '/guide/source-api/' },
-      { text: 'Action 列表', link: '/guide/actions/' }
+      { text: 'Action 列表', link: '/guide/actions/' },
+      { text: '变更记录', link: '/guide/changelog' }
     ],
 
     // 侧边栏
@@ -58,7 +59,8 @@ export default defineConfig({
                 { text: '打开视频详情页 (openVodDetail)', link: '/guide/actions/open-vod-detail' },
                 { text: '打开视频播放页 (openVideoPlayer)', link: '/guide/actions/open-video-player' }
               ]
-            }
+            },
+            { text: '变更记录', link: '/guide/changelog' }
           ]
         }
       ]
