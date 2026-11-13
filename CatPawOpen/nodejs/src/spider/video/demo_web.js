@@ -374,6 +374,8 @@ async function playAction(inReq, _outResp) {
     const vodId = params.id || params.vod_id || extData?.vodId || extData?.vod_id;
     const vodName = params.name || params.vod_name || extData?.name || extData?.vod_name || '';
     const vodPic = params.pic || params.vod_pic || extData?.pic || extData?.vod_pic || '';
+    const rawProgress = params.progress_seconds;
+    const progressSeconds = rawProgress !== undefined && rawProgress !== '' ? Number(rawProgress) : undefined;
 
     if (!vodId && !extData) {
         return { success: false, message: '缺少 vod_id 或 extData 参数' };
@@ -384,6 +386,9 @@ async function playAction(inReq, _outResp) {
         vod_name: String(vodName),
         vod_pic: String(vodPic),
     };
+    if (typeof progressSeconds === 'number' && Number.isFinite(progressSeconds) && progressSeconds >= 0) {
+        opt.progress_seconds = Math.floor(progressSeconds);
+    }
 
     const result = await inReq.server.messageToDart({
         action: 'openVideoPlayer',
@@ -1209,13 +1214,13 @@ function renderWebPage({ prefix, categories: classList, initialVideos, pageInfo,
 
         .card-btn-bar {
             display: flex;
-            gap: 6px;
+            gap: 4px;
             margin-top: auto;
         }
 
         .btn-card-action {
             flex: 1;
-            padding: 5px 0;
+            padding: 5px 2px;
             font-size: 11px;
             font-weight: 500;
             border-radius: var(--radius-sm);
@@ -1224,6 +1229,7 @@ function renderWebPage({ prefix, categories: classList, initialVideos, pageInfo,
             color: var(--text-sub);
             cursor: pointer;
             text-align: center;
+            white-space: nowrap;
             transition: all 0.15s ease;
         }
 
@@ -1245,6 +1251,18 @@ function renderWebPage({ prefix, categories: classList, initialVideos, pageInfo,
 
         .btn-card-play:hover {
             background: var(--primary-gradient);
+            color: #ffffff;
+            border-color: transparent;
+        }
+
+        .btn-card-play-at {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: rgba(16, 185, 129, 0.35);
+            color: #6ee7b7;
+        }
+
+        .btn-card-play-at:hover {
+            background: rgba(16, 185, 129, 0.85);
             color: #ffffff;
             border-color: transparent;
         }
@@ -1509,13 +1527,17 @@ function renderWebPage({ prefix, categories: classList, initialVideos, pageInfo,
             });
         }
 
-        // 点击直接唤起原生播放器起播
-        function playVideo(vodId, vodName, vodPic) {
-            triggerAction('openVideoPlayer', {
+        // 点击直接唤起原生播放器起播（可选指定起始秒数 progress_seconds）
+        function playVideo(vodId, vodName, vodPic, progressSeconds) {
+            const opt = {
                 vod_id: String(vodId),
                 vod_name: String(vodName || ''),
                 vod_pic: String(vodPic || ''),
-            });
+            };
+            if (typeof progressSeconds === 'number' && Number.isFinite(progressSeconds) && progressSeconds >= 0) {
+                opt.progress_seconds = Math.floor(progressSeconds);
+            }
+            triggerAction('openVideoPlayer', opt);
         }
 
         // 跳转原生聚合搜索
@@ -1546,6 +1568,7 @@ function renderWebPage({ prefix, categories: classList, initialVideos, pageInfo,
                     <div class="card-btn-bar">
                         <button class="btn-card-action btn-card-detail" onclick="openDetail('\${vod.vod_id}', '\${safeName}', '\${safePic}')">详情</button>
                         <button class="btn-card-action btn-card-play" onclick="playVideo('\${vod.vod_id}', '\${safeName}', '\${safePic}')">▶ 播放</button>
+                        <button class="btn-card-action btn-card-play-at" onclick="playVideo('\${vod.vod_id}', '\${safeName}', '\${safePic}', 118)" title="测试指定从 01:58 (118秒) 起播">⏱ 1:58</button>
                     </div>
                 </div>
             </div>
@@ -1960,6 +1983,13 @@ async function test(inReq, outResp) {
             opt: { vod_id: '99227', vod_name: '太古神尊' },
         });
         dataResult.action = resp.json();
+
+        // 验证指定 1:58 (118秒) 起播 Action 接口
+        resp = await inReq.server.inject().post(`${prefix}/action`).payload({
+            action: 'openVideoPlayer',
+            opt: { vod_id: '99227', vod_name: '太古神尊', progress_seconds: 118 },
+        });
+        dataResult.actionPlayAt = resp.json();
 
         // 验证 API 视频分页检索接口
         resp = await inReq.server.inject().get(`${prefix}/api/videos?page=1`);

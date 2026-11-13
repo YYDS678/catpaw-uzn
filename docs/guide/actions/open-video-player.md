@@ -15,6 +15,7 @@
         "vod_pic": "https://example.com/poster.jpg",
         "episode_name": "第3集",
         "line_from": "官方超清",
+        "progress_seconds": 350,
         "key": "tencent",
         "api": "/spider/baseset/0"
     }
@@ -30,6 +31,7 @@
 | `vod_pic` | String | 否 | 封面图海报 URL，用于系统媒体中心展示 |
 | `episode_name` | String | 否 | 目标起播集名（如 `"第3集"`）。缺省时自动尝试按历史进度恢复，无历史时默认第 1 集 |
 | `line_from` | String | 否 | 目标起播线路名（如 `"官方超清"`）。缺省时自动尝试按历史进度恢复，无历史时默认第 1 条线路 |
+| `progress_seconds` | Number | 否 | 指定首次起播位置（单位：秒，非负整数）。传入 `>= 0` 时优先从该位置起播（传 `0` 可强制从头播放）；缺省时按客户端本地历史进度恢复。仅对本次打开的首次起播生效，切集或连播下一集不受影响 |
 | `key` | String | 否 | 站点 Key（与 `/config` 返回的 `SiteMeta.key` 严格对齐）。缺省时默认取当前浏览站点 |
 | `api` | String | 否 | 站点 API 端点（与 `/config` 返回的 `SiteMeta.api` 严格对齐）。缺省时默认取当前浏览站点 |
 
@@ -64,7 +66,7 @@
 }
 ```
 
-壳子将通过 `extData` 还原原属订阅、站点、线路与集数，并定位到精准的播放进度恢复播放。若同时在外层显式传入了 `episode_name` 或 `line_from`，则会以显式指定的集数与线路起播。
+壳子将通过 `extData` 还原原属订阅、站点、线路与集数，并定位到精准的播放进度恢复播放。若同时在外层显式传入了 `episode_name`、`line_from` 或 `progress_seconds`，则会以显式指定的集数、线路与起始秒数起播。
 
 ---
 

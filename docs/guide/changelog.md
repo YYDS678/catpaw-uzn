@@ -4,6 +4,19 @@
 
 ---
 
+## 2026-11-13
+
+### 功能增强：openVideoPlayer 支持指定起播位置
+- **入参字段扩充**：`openVideoPlayer` 新增可选参数 `progress_seconds`（非负整数，单位：秒），同时支持普通点播模式与 `extData` 快照直跳模式的外层显式覆盖；
+- **一次性首播语义**：传入 `>= 0` 时仅对本次打开的首次起播生效（传 `0` 可强制从头播放），缺省按客户端本地历史进度恢复，切集或连播下一集自动失效；
+- **文档同步更新**：更新 `docs/guide/actions/open-video-player.md`，补充 `progress_seconds` 入参示例、字段说明与 `extData` 覆盖规则。
+
+### 示例更新：Type 7 Web 交互源 (demo_web)
+- **指定时间起播测试**：在 `demo_web.js` 视频卡片操作栏新增 `⏱ 1:58` 快捷按钮（调用 `openVideoPlayer` 并传入 `progress_seconds: 118`），同步支持 `/play-action` 透传及 `/test` 端点校验；
+- **打包产物同步**：重新执行 `npm run pack` 打包生成最新 `dist.zip` 与 MD5 校验和。
+
+---
+
 ## 2026-11-11
 
 ### 规范重构：统一 Action 响应封套格式
