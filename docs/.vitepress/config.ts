@@ -19,7 +19,8 @@ export default defineConfig({
       { text: '文档', link: '/guide/overview' },
       { text: '站源接口', link: '/guide/source-api/' },
       { text: 'Action 列表', link: '/guide/actions/' },
-      { text: '变更记录', link: '/guide/changelog' }
+      { text: '变更记录', link: '/guide/changelog' },
+      { text: '图标生成器', link: '/icon-studio.html', target: '_blank' }
     ],
 
     // 侧边栏

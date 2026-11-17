@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>App Icon 生成器 · CatPlay Studio</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #0b0e14;
+      color: #e5e7eb;
+    }
+    /* Custom subtle scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.14); border-radius: 999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.24); }
+
+    input[type="color"] {
+      -webkit-appearance: none;
+      appearance: none;
+      border: none;
+      padding: 0;
+      background: transparent;
+      cursor: pointer;
+    }
+    input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+    input[type="color"]::-webkit-color-swatch {
+      border: 1.5px solid rgba(255,255,255,0.22);
+      border-radius: 8px;
+    }
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 5px;
+      background: rgba(255,255,255,0.12);
+      border-radius: 999px;
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: #60a5fa;
+      border: 2px solid #fff;
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.45);
+    }
+    .checker-bg {
+      background-color: #151922;
+      background-image:
+        linear-gradient(45deg, #1b202b 25%, transparent 25%),
+        linear-gradient(-45deg, #1b202b 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #1b202b 75%),
+        linear-gradient(-45deg, transparent 75%, #1b202b 75%);
+      background-size: 20px 20px;
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+  <!-- Header -->
+  <header class="border-b border-white/10 bg-[#10141d]/90 backdrop-blur sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-900 flex items-center justify-center border border-white/15 shadow">
+          <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 10.5L6 5.5L9.5 8.5C11.1 8 12.9 8 14.5 8.5L18 5.5L19 10.5C20 12 20 15.5 18 17.5C16.2 19.3 7.8 19.3 6 17.5C4 15.5 4 12 5 10.5Z"/>
+            <polygon points="10.5,11 15,13.5 10.5,16" fill="white" stroke="none"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-sm sm:text-base font-semibold tracking-tight text-white">CatPlay Icon Studio</h1>
+          <p class="text-[11px] text-slate-400">主题抽离 · 自由调色 · 多维背景变换生成器</p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <button id="btnRandom" type="button" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 transition flex items-center gap-1.5">
+          <span>🎲</span><span>随机配色</span>
+        </button>
+        <button id="btnSwap" type="button" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-white/5 hover:bg-white/10 border border-white/10 text-slate-200 transition flex items-center gap-1.5">
+          <span>⇄</span><span>互换色</span>
+        </button>
+        <button id="btnExportIco" type="button" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-white/10 hover:bg-white/15 border border-white/15 text-white transition">
+          导出 ICO
+        </button>
+        <button id="btnExportSvg" type="button" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-white/10 hover:bg-white/15 border border-white/15 text-white transition">
+          导出 SVG
+        </button>
+        <button id="btnExportPng" type="button" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/25 transition">
+          导出 PNG (1024px)
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+
+    <!-- Left: Preview & Multi-Size Dock -->
+    <section class="lg:col-span-5 flex flex-col gap-4 lg:sticky lg:top-20">
+      <!-- Theme Preset Strip -->
+      <div class="bg-[#121722] border border-white/10 rounded-2xl p-3.5">
+        <div class="flex items-center justify-between mb-2.5">
+          <span class="text-xs font-semibold text-slate-300 uppercase tracking-wider">已抽离主题预设</span>
+          <span id="activeThemeLabel" class="text-[11px] text-blue-400 font-medium">深海蓝调</span>
+        </div>
+        <div id="presetGrid" class="grid grid-cols-3 sm:grid-cols-6 lg:grid-cols-3 gap-2"></div>
+      </div>
+
+      <!-- Main Canvas Preview -->
+      <div class="bg-[#121722] border border-white/10 rounded-2xl p-4 flex flex-col items-center">
+        <div class="w-full flex items-center justify-between mb-3">
+          <span class="text-xs font-medium text-slate-300">实时预览</span>
+          <span class="text-[11px] text-slate-400 font-mono">1:1 · 1024 × 1024</span>
+        </div>
+
+        <div class="w-[300px] h-[300px] sm:w-[340px] sm:h-[340px] flex items-center justify-center my-1">
+          <canvas id="iconCanvas" width="1024" height="1024" class="w-full h-full aspect-square block"></canvas>
+        </div>
+
+        <!-- Multi-size App Dock Preview -->
+        <div class="w-full mt-4 pt-3.5 border-t border-white/10 flex items-center justify-between gap-2">
+          <div class="flex items-center gap-3">
+            <div class="flex flex-col items-center gap-1">
+              <canvas id="mini120" width="120" height="120" class="w-12 h-12 rounded-xl shadow"></canvas>
+              <span class="text-[10px] text-slate-500">120px</span>
+            </div>
+            <div class="flex flex-col items-center gap-1">
+              <canvas id="mini60" width="60" height="60" class="w-8 h-8 rounded-lg shadow"></canvas>
+              <span class="text-[10px] text-slate-500">60px</span>
+            </div>
+            <div class="flex flex-col items-center gap-1">
+              <canvas id="mini32" width="32" height="32" class="w-5 h-5 rounded shadow"></canvas>
+              <span class="text-[10px] text-slate-500">32px</span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-1.5">
+            <button data-size="512" class="export-size-btn px-2.5 py-1.5 rounded-lg text-[11px] bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 transition">512px</button>
+            <button data-size="180" class="export-size-btn px-2.5 py-1.5 rounded-lg text-[11px] bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 transition">180px</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right: Controls -->
+    <section class="lg:col-span-7 flex flex-col gap-4">
+
+      <!-- 1. Background Transform Type -->
+      <div class="bg-[#121722] border border-white/10 rounded-2xl p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-xs font-semibold text-slate-300 uppercase tracking-wider">背景变换类型</h2>
+          <span id="transformDesc" class="text-[11px] text-slate-400">多向平滑色彩过渡</span>
+        </div>
+
+        <div id="transformTabs" class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
+          <button data-type="linear" class="tx-btn px-3 py-2 rounded-xl text-xs font-medium border text-left transition">
+            <div class="font-semibold">线性渐变</div>
+            <div class="text-[10px] opacity-70">Linear Gradient</div>
+          </button>
+          <button data-type="mesh" class="tx-btn px-3 py-2 rounded-xl text-xs font-medium border text-left transition">
+            <div class="font-semibold">弥散渐变</div>
+            <div class="text-[10px] opacity-70">Mesh Aurora</div>
+          </button>
+          <button data-type="spread" class="tx-btn px-3 py-2 rounded-xl text-xs font-medium border text-left transition">
+            <div class="font-semibold">扩散波纹</div>
+            <div class="text-[10px] opacity-70">Outward Spread</div>
+          </button>
+          <button data-type="radial" class="tx-btn px-3 py-2 rounded-xl text-xs font-medium border text-left transition">
+            <div class="font-semibold">中心放射</div>
+            <div class="text-[10px] opacity-70">Center Radial</div>
+          </button>
+          <button data-type="glass" class="tx-btn px-3 py-2 rounded-xl text-xs font-medium border text-left transition">
+            <div class="font-semibold">粉雾玻璃</div>
+            <div class="text-[10px] opacity-70">Glassmorphism</div>
+          </button>
+          <button data-type="outline" class="tx-btn px-3 py-2 rounded-xl text-xs font-medium border text-left transition">
+            <div class="font-semibold">纯色 / 线框</div>
+            <div class="text-[10px] opacity-70">Solid &amp; Border</div>
+          </button>
+          <button data-type="conic" class="tx-btn px-3 py-2 rounded-xl text-xs font-medium border text-left transition">
+            <div class="font-semibold">角向锥形</div>
+            <div class="text-[10px] opacity-70">Conic Sweep</div>
+          </button>
+          <button data-type="spotlight" class="tx-btn px-3 py-2 rounded-xl text-xs font-medium border text-left transition">
+            <div class="font-semibold">影院聚光</div>
+            <div class="text-[10px] opacity-70">Spotlight Vignette</div>
+          </button>
+          <button data-type="grain" class="tx-btn px-3 py-2 rounded-xl text-xs font-medium border text-left transition">
+            <div class="font-semibold">胶片磨砂</div>
+            <div class="text-[10px] opacity-70">Film Grain</div>
+          </button>
+          <button data-type="split" class="tx-btn px-3 py-2 rounded-xl text-xs font-medium border text-left transition">
+            <div class="font-semibold">对角分割</div>
+            <div class="text-[10px] opacity-70">Diagonal Split</div>
+          </button>
+          <button data-type="innerglow" class="tx-btn px-3 py-2 rounded-xl text-xs font-medium border text-left transition">
+            <div class="font-semibold">内发光浮雕</div>
+            <div class="text-[10px] opacity-70">Soft Inner Glow</div>
+          </button>
+          <button data-type="dotgrid" class="tx-btn px-3 py-2 rounded-xl text-xs font-medium border text-left transition">
+            <div class="font-semibold">极细点阵</div>
+            <div class="text-[10px] opacity-70">Dot Matrix</div>
+          </button>
+        </div>
+
+        <!-- Transform Dynamic Parameters -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-white/10">
+          <div>
+            <div class="flex justify-between text-xs mb-1.5">
+              <span class="text-slate-300" id="param1Label">角度 / 相位</span>
+              <span class="font-mono text-blue-400" id="param1Val">135°</span>
+            </div>
+            <input id="param1" type="range" min="0" max="360" value="135" class="w-full" />
+          </div>
+          <div>
+            <div class="flex justify-between text-xs mb-1.5">
+              <span class="text-slate-300" id="param2Label">柔和度 / 扩散强度</span>
+              <span class="font-mono text-blue-400" id="param2Val">65%</span>
+            </div>
+            <input id="param2" type="range" min="10" max="100" value="65" class="w-full" />
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Color Palette Controls -->
+      <div class="bg-[#121722] border border-white/10 rounded-2xl p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-xs font-semibold text-slate-300 uppercase tracking-wider">色彩自由调整</h2>
+          <label class="flex items-center gap-1.5 text-xs text-slate-400 cursor-pointer select-none">
+            <input id="chkUseThirdColor" type="checkbox" class="accent-blue-500 rounded" checked />
+            <span>启用第三点缀色</span>
+          </label>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <!-- BG Color 1 -->
+          <div class="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-3 py-2">
+            <div class="flex items-center gap-2.5">
+              <input id="colBg1" type="color" value="#030b21" class="w-8 h-8" />
+              <div>
+                <div class="text-xs font-medium text-white">背景主色</div>
+                <div class="text-[10px] text-slate-400">起始 / 中心色</div>
+              </div>
+            </div>
+            <input id="hexBg1" type="text" value="#030B21" maxlength="7" class="w-20 bg-black/30 border border-white/10 rounded px-2 py-1 text-xs font-mono text-slate-200 uppercase text-center" />
+          </div>
+
+          <!-- BG Color 2 -->
+          <div class="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-3 py-2">
+            <div class="flex items-center gap-2.5">
+              <input id="colBg2" type="color" value="#0c4eb8" class="w-8 h-8" />
+              <div>
+                <div class="text-xs font-medium text-white">背景辅色</div>
+                <div class="text-[10px] text-slate-400">结束 / 边缘色</div>
+              </div>
+            </div>
+            <input id="hexBg2" type="text" value="#0C4EB8" maxlength="7" class="w-20 bg-black/30 border border-white/10 rounded px-2 py-1 text-xs font-mono text-slate-200 uppercase text-center" />
+          </div>
+
+          <!-- BG Color 3 (Accent) -->
+          <div id="bg3Wrap" class="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-3 py-2">
+            <div class="flex items-center gap-2.5">
+              <input id="colBg3" type="color" value="#2563eb" class="w-8 h-8" />
+              <div>
+                <div class="text-xs font-medium text-white">弥散点缀色</div>
+                <div class="text-[10px] text-slate-400">光斑 / 过渡色</div>
+              </div>
+            </div>
+            <input id="hexBg3" type="text" value="#2563EB" maxlength="7" class="w-20 bg-black/30 border border-white/10 rounded px-2 py-1 text-xs font-mono text-slate-200 uppercase text-center" />
+          </div>
+
+          <!-- Line / Cat Stroke Color -->
+          <div class="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-3 py-2">
+            <div class="flex items-center gap-2.5">
+              <input id="colLine" type="color" value="#ffffff" class="w-8 h-8" />
+              <div>
+                <div class="text-xs font-medium text-white">线条 / 猫头色</div>
+                <div class="text-[10px] text-slate-400">轮廓与线框色</div>
+              </div>
+            </div>
+            <input id="hexLine" type="text" value="#FFFFFF" maxlength="7" class="w-20 bg-black/30 border border-white/10 rounded px-2 py-1 text-xs font-mono text-slate-200 uppercase text-center" />
+          </div>
+
+          <!-- Play Button Color -->
+          <div class="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-3 py-2 sm:col-span-2">
+            <div class="flex items-center gap-2.5">
+              <input id="colPlay" type="color" value="#ffffff" class="w-8 h-8" />
+              <div>
+                <div class="text-xs font-medium text-white">播放键颜色</div>
+                <div class="text-[10px] text-slate-400">可与线条色一致或独立撞色</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="btnSyncPlay" type="button" class="px-2 py-1 rounded text-[11px] bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300">同步线条色</button>
+              <input id="hexPlay" type="text" value="#FFFFFF" maxlength="7" class="w-20 bg-black/30 border border-white/10 rounded px-2 py-1 text-xs font-mono text-slate-200 uppercase text-center" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Cat & Play Geometry Controls -->
+      <div class="bg-[#121722] border border-white/10 rounded-2xl p-4">
+        <h2 class="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-3">图标形态与细节</h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <!-- Cat Style -->
+          <div>
+            <label class="block text-xs text-slate-400 mb-1.5">猫头轮廓风格</label>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+              <button data-cat="closed" class="cat-style-btn py-1.5 rounded-lg text-xs border transition">闭合描边</button>
+              <button data-cat="open" class="cat-style-btn py-1.5 rounded-lg text-xs border transition">底部开口</button>
+              <button data-cat="filled" class="cat-style-btn py-1.5 rounded-lg text-xs border transition">实心萌猫</button>
+              <button data-cat="tail" class="cat-style-btn py-1.5 rounded-lg text-xs border transition">断口卷尾</button>
+            </div>
+          </div>
+
+          <!-- Play Style -->
+          <div>
+            <label class="block text-xs text-slate-400 mb-1.5">播放键样式</label>
+            <div class="grid grid-cols-2 gap-1.5">
+              <button data-play="solid" class="play-style-btn py-1.5 rounded-lg text-xs border transition">实心三角</button>
+              <button data-play="hollow" class="play-style-btn py-1.5 rounded-lg text-xs border transition">空心描边</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tail Options (shown when 断口卷尾 is active) -->
+        <div id="tailOptionsRow" class="hidden mb-4 p-2.5 rounded-xl bg-white/5 border border-white/10 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-400">尾巴朝向</span>
+            <div class="flex gap-1.5">
+              <button data-taildir="left" class="tail-dir-btn px-2.5 py-1 rounded-lg text-xs border transition">左卷尾</button>
+              <button data-taildir="right" class="tail-dir-btn px-2.5 py-1 rounded-lg text-xs border transition">右卷尾</button>
+            </div>
+          </div>
+          <label class="flex items-center gap-2 cursor-pointer select-none text-xs text-slate-300">
+            <input id="chkTailArc" type="checkbox" class="accent-blue-500" />
+            <span>断口处短弧点缀</span>
+          </label>
+        </div>
+
+        <!-- Sliders -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+          <div>
+            <div class="flex justify-between text-xs mb-1.5">
+              <span class="text-slate-300">线条粗细</span>
+              <span class="font-mono text-blue-400" id="strokeVal">34px</span>
+            </div>
+            <input id="rngStroke" type="range" min="14" max="54" value="34" class="w-full" />
+          </div>
+          <div>
+            <div class="flex justify-between text-xs mb-1.5">
+              <span class="text-slate-300">图标缩放</span>
+              <span class="font-mono text-blue-400" id="scaleVal">100%</span>
+            </div>
+            <input id="rngScale" type="range" min="70" max="115" value="100" class="w-full" />
+          </div>
+          <div>
+            <div class="flex justify-between text-xs mb-1.5">
+              <span class="text-slate-300">圆角半径</span>
+              <span class="font-mono text-blue-400" id="radiusVal">22%</span>
+            </div>
+            <input id="rngRadius" type="range" min="0" max="50" value="22" class="w-full" />
+          </div>
+        </div>
+
+        <!-- App Icon Shape & Transparency Quick Options -->
+        <div class="pt-3 border-t border-white/10 mb-3">
+          <label class="block text-xs text-slate-400 mb-2">App Icon 底形与透明选项</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button id="btnShapeSquircle" type="button" class="shape-mode-btn py-1.5 px-2 rounded-lg text-xs border transition">圆角透明底 (22%)</button>
+            <button id="btnShapeSquare" type="button" class="shape-mode-btn py-1.5 px-2 rounded-lg text-xs border transition">直角满铺 (iOS)</button>
+            <button id="btnShapeNoBg" type="button" class="shape-mode-btn py-1.5 px-2 rounded-lg text-xs border transition">去掉底色 (纯透明)</button>
+          </div>
+        </div>
+
+        <!-- Toggles -->
+        <div class="flex flex-wrap gap-4 pt-3 border-t border-white/10 text-xs">
+          <label class="flex items-center gap-2 cursor-pointer select-none text-slate-300">
+            <input id="chkTransparentBg" type="checkbox" class="accent-blue-500" />
+            <span>去掉背景底色（纯透明）</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer select-none text-slate-300">
+            <input id="chkMouth" type="checkbox" class="accent-blue-500" />
+            <span>显示猫嘴 (w 表情)</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer select-none text-slate-300">
+            <input id="chkRim" type="checkbox" class="accent-blue-500" />
+            <span>玻璃高光边框</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer select-none text-slate-300">
+            <input id="chkGlow" type="checkbox" class="accent-blue-500" />
+            <span>图标微投影</span>
+          </label>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-slate-800 border border-white/15 text-xs text-white shadow-xl opacity-0 pointer-events-none transition-opacity duration-200 z-50"></div>
+
+  <script>
+    // Extracted Themes from the 7 uploaded App Icon images
+    const PRESETS = [
+      {
+        id: 'deep-navy',
+        name: '深海蓝调',
+        desc: 'Icon-2 经典深蓝渐变',
+        transform: 'linear',
+        bg1: '#030B21',
+        bg2: '#0B4EB8',
+        bg3: '#1D4ED8',
+        useThird: false,
+        line: '#FFFFFF',
+        play: '#FFFFFF',
+        catStyle: 'closed',
+        playStyle: 'solid',
+        mouth: false,
+        rim: false,
+        glow: false,
+        stroke: 34,
+        scale: 100,
+        radius: 22,
+        param1: 150,
+        param2: 65
+      },
+      {
+        id: 'coral-sunset',
+        name: '珊瑚暖阳',
+        desc: 'Icon-3 珊瑚粉橙渐变 + 空心播放',
+        transform: 'linear',
+        bg1: '#E85355',
+        bg2: '#F6A07B',
+        bg3: '#FDA4AF',
+        useThird: false,
+        line: '#FFFFFF',
+        play: '#FFFFFF',
+        catStyle: 'closed',
+        playStyle: 'hollow',
+        mouth: false,
+        rim: true,
+        glow: false,
+        stroke: 32,
+        scale: 100,
+        radius: 22,
+        param1: 165,
+        param2: 60
+      },
+      {
+        id: 'sky-cute',
+        name: '晴空萌猫',
+        desc: 'Icon-4 白底蓝框 + 实心猫头 + 猫嘴',
+        transform: 'outline',
+        bg1: '#FFFFFF',
+        bg2: '#73BDF8',
+        bg3: '#BAE6FD',
+        useThird: false,
+        line: '#73BDF8',
+        play: '#FFFFFF',
+        catStyle: 'filled',
+        playStyle: 'solid',
+        mouth: true,
+        rim: false,
+        glow: true,
+        stroke: 24,
+        scale: 96,
+        radius: 22,
+        param1: 135,
+        param2: 50
+      },
+      {
+        id: 'rose-glass',
+        name: '粉雾玻璃',
+        desc: 'Icon 玻璃拟态 + 开口猫头',
+        transform: 'glass',
+        bg1: '#F7B0BE',
+        bg2: '#D8637F',
+        bg3: '#FDE2E7',
+        useThird: true,
+        line: '#FFFFFF',
+        play: '#FFFFFF',
+        catStyle: 'open',
+        playStyle: 'hollow',
+        mouth: false,
+        rim: true,
+        glow: true,
+        stroke: 34,
+        scale: 100,
+        radius: 22,
+        param1: 120,
+        param2: 70
+      },
+      {
+        id: 'cobalt-mesh',
+        name: '钴蓝弥散',
+        desc: 'Icon-5/6 钴蓝弥散光影',
+        transform: 'mesh',
+        bg1: '#061133',
+        bg2: '#1557C4',
+        bg3: '#3B82F6',
+        useThird: true,
+        line: '#FFFFFF',
+        play: '#FFFFFF',
+        catStyle: 'closed',
+        playStyle: 'solid',
+        mouth: false,
+        rim: false,
+        glow: false,
+        stroke: 36,
+        scale: 100,
+        radius: 22,
+        param1: 45,
+        param2: 75
+      },
+      {
+        id: 'midnight-radial',
+        name: '极夜放射',
+        desc: 'Icon-8 中心微光放射',
+        transform: 'radial',
+        bg1: '#1E5CC9',
+        bg2: '#07122E',
+        bg3: '#38BDF8',
+        useThird: true,
+        line: '#FFFFFF',
+        play: '#FFFFFF',
+        catStyle: 'closed',
+        playStyle: 'solid',
+        mouth: false,
+        rim: false,
+        glow: false,
+        stroke: 34,
+        scale: 100,
+        radius: 22,
+        param1: 180,
+        param2: 72
+      }
+    ];
+
+    const TRANSFORM_META = {
+      linear:  { desc: '角度可控的双色/三色线性平滑渐变', p1: '渐变角度', p1Max: 360, p1Unit: '°', p2: '色带柔和度', p2Unit: '%' },
+      mesh:    { desc: '多光斑有机融合的极光弥散效果',     p1: '光斑相位', p1Max: 360, p1Unit: '°', p2: '弥散模糊度', p2Unit: '%' },
+      spread:  { desc: '由中心向外层层扩散的柔和光晕波纹', p1: '波纹层数', p1Max: 12,  p1Unit: '层', p2: '扩散范围',   p2Unit: '%' },
+      radial:  { desc: '中心高光向外围衰减的放射状渐变',   p1: '放射光束', p1Max: 360, p1Unit: '°', p2: '放射半径',   p2Unit: '%' },
+      glass:   { desc: '柔雾渐变底色叠加磨砂玻璃高光质感', p1: '高光角度', p1Max: 360, p1Unit: '°', p2: '磨砂透光度', p2Unit: '%' },
+      outline:   { desc: '纯色底板或极简描边线框背景',       p1: '边框粗细', p1Max: 48,  p1Unit: 'px', p2: '背景混合度', p2Unit: '%' },
+      conic:     { desc: '围绕中心 360° 旋转扫过的锥形光泽',   p1: '起始角度', p1Max: 360, p1Unit: '°',  p2: '色彩过渡度', p2Unit: '%' },
+      spotlight: { desc: '四周暗角压低、中心柔和聚光灯效果', p1: '光源方向', p1Max: 360, p1Unit: '°',  p2: '聚光范围',   p2Unit: '%' },
+      grain:     { desc: '渐变底色叠加细腻胶片磨砂颗粒质感', p1: '渐变角度', p1Max: 360, p1Unit: '°',  p2: '颗粒强度',   p2Unit: '%' },
+      split:     { desc: '几何斜切或柔和羽化的双色分区背景', p1: '分割角度', p1Max: 360, p1Unit: '°',  p2: '边界羽化度', p2Unit: '%' },
+      innerglow: { desc: '内边缘柔和发光与微立体浮雕质感',   p1: '光照角度', p1Max: 360, p1Unit: '°',  p2: '浮雕强度',   p2Unit: '%' },
+      dotgrid:   { desc: '深浅渐变叠加密集微点阵与科技网格', p1: '点阵密度', p1Max: 48,  p1Unit: 'px', p2: '纹理透明度', p2Unit: '%' }
+    };
+
+    const state = { ...PRESETS[0], radius: 0, transparentBg: false, tailDir: 'left', tailArc: false, activePreset: 'deep-navy' };
+
+    const $ = (id) => document.getElementById(id);
+    const canvas = $('iconCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function showToast(msg) {
+      const el = $('toast');
+      el.textContent = msg;
+      el.classList.remove('opacity-0');
+      clearTimeout(el._t);
+      el._t = setTimeout(() => el.classList.add('opacity-0'), 2200);
+    }
+
+    // Squircle-like rounded rect path
+    function roundedRectPath(c, x, y, w, h, r) {
+      const rad = Math.min(r, w / 2, h / 2);
+      c.beginPath();
+      c.moveTo(x + rad, y);
+      c.lineTo(x + w - rad, y);
+      c.quadraticCurveTo(x + w, y, x + w, y + rad);
+      c.lineTo(x + w, y + h - rad);
+      c.quadraticCurveTo(x + w, y + h, x + w - rad, y + h);
+      c.lineTo(x + rad, y + h);
+      c.quadraticCurveTo(x, y + h, x, y + h - rad);
+      c.lineTo(x, y + rad);
+      c.quadraticCurveTo(x, y, x + rad, y);
+      c.closePath();
+    }
+
+    // Draw background based on transform type onto target 1024x1024 ctx
+    function drawBackground(c, size = 1024) {
+      const s = state;
+      const cx = size / 2;
+      const cy = size / 2;
+      const rad = (s.param1 * Math.PI) / 180;
+      const p2 = s.param2 / 100;
+
+      if (s.transform === 'linear') {
+        const dx = Math.cos(rad) * size * 0.5;
+        const dy = Math.sin(rad) * size * 0.5;
+        const g = c.createLinearGradient(cx - dx, cy - dy, cx + dx, cy + dy);
+        g.addColorStop(0, s.bg1);
+        if (s.useThird) g.addColorStop(0.5 + (p2 - 0.5) * 0.3, s.bg3);
+        g.addColorStop(1, s.bg2);
+        c.fillStyle = g;
+        c.fillRect(0, 0, size, size);
+      } else if (s.transform === 'mesh') {
+        // Base fill
+        c.fillStyle = s.bg1;
+        c.fillRect(0, 0, size, size);
+        // Overlapping soft radial blobs
+        const blobs = [
+          { x: cx + Math.cos(rad) * size * 0.32, y: cy + Math.sin(rad) * size * 0.32, r: size * (0.45 + p2 * 0.45), color: s.bg2 },
+          { x: cx + Math.cos(rad + 2.2) * size * 0.34, y: cy + Math.sin(rad + 2.2) * size * 0.34, r: size * (0.4 + p2 * 0.4), color: s.useThird ? s.bg3 : s.bg2 },
+          { x: cx + Math.cos(rad + 4.3) * size * 0.28, y: cy + Math.sin(rad + 4.3) * size * 0.28, r: size * (0.38 + p2 * 0.35), color: s.bg1 }
+        ];
+        blobs.forEach(b => {
+          const rg = c.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r);
+          rg.addColorStop(0, b.color);
+          rg.addColorStop(0.55, hexToRgba(b.color, 0.55));
+          rg.addColorStop(1, hexToRgba(b.color, 0));
+          c.fillStyle = rg;
+          c.fillRect(0, 0, size, size);
+        });
+      } else if (s.transform === 'spread') {
+        // Outward concentric diffusion / ripple spread
+        c.fillStyle = s.bg2;
+        c.fillRect(0, 0, size, size);
+        const maxR = size * (0.45 + p2 * 0.45);
+        const baseRg = c.createRadialGradient(cx, cy, 0, cx, cy, maxR);
+        baseRg.addColorStop(0, s.bg1);
+        if (s.useThird) baseRg.addColorStop(0.5, s.bg3);
+        baseRg.addColorStop(1, s.bg2);
+        c.fillStyle = baseRg;
+        c.fillRect(0, 0, size, size);
+
+        const rings = Math.max(2, Math.min(12, Math.round(s.param1)));
+        for (let i = rings; i >= 1; i--) {
+          const ratio = i / rings;
+          const r = maxR * ratio;
+          c.beginPath();
+          c.arc(cx, cy, r, 0, Math.PI * 2);
+          const ringColor = i % 2 === 0 ? s.bg1 : (s.useThird ? s.bg3 : s.bg2);
+          c.fillStyle = hexToRgba(ringColor, 0.12 + (1 - ratio) * 0.12);
+          c.fill();
+        }
+      } else if (s.transform === 'radial') {
+        // Center radial burst
+        const maxR = size * (0.35 + p2 * 0.55);
+        const rg = c.createRadialGradient(cx, cy, size * 0.04, cx, cy, maxR);
+        rg.addColorStop(0, s.bg1);
+        if (s.useThird) rg.addColorStop(0.48, s.bg3);
+        rg.addColorStop(1, s.bg2);
+        c.fillStyle = rg;
+        c.fillRect(0, 0, size, size);
+
+        // Subtle radial rays if param1 > 0
+        if (s.param1 > 5) {
+          c.save();
+          c.translate(cx, cy);
+          c.rotate(rad);
+          const rayCount = 12;
+          for (let i = 0; i < rayCount; i++) {
+            c.rotate((Math.PI * 2) / rayCount);
+            const rayGrad = c.createLinearGradient(0, 0, maxR, 0);
+            rayGrad.addColorStop(0, hexToRgba(s.useThird ? s.bg3 : s.bg1, 0.22));
+            rayGrad.addColorStop(1, hexToRgba(s.bg2, 0));
+            c.beginPath();
+            c.moveTo(0, 0);
+            c.lineTo(maxR, -maxR * 0.12);
+            c.lineTo(maxR, maxR * 0.12);
+            c.closePath();
+            c.fillStyle = rayGrad;
+            c.fill();
+          }
+          c.restore();
+        }
+      } else if (s.transform === 'glass') {
+        const dx = Math.cos(rad) * size * 0.45;
+        const dy = Math.sin(rad) * size * 0.45;
+        const g = c.createLinearGradient(cx - dx, cy - dy, cx + dx, cy + dy);
+        g.addColorStop(0, s.bg1);
+        if (s.useThird) g.addColorStop(0.45, s.bg3);
+        g.addColorStop(1, s.bg2);
+        c.fillStyle = g;
+        c.fillRect(0, 0, size, size);
+
+        // Frosted inner sheen
+        const sheen = c.createLinearGradient(0, 0, size, size);
+        sheen.addColorStop(0, `rgba(255,255,255,${0.28 * p2})`);
+        sheen.addColorStop(0.5, `rgba(255,255,255,${0.05 * p2})`);
+        sheen.addColorStop(1, `rgba(255,255,255,${0.18 * p2})`);
+        c.fillStyle = sheen;
+        c.fillRect(0, 0, size, size);
+      } else if (s.transform === 'outline') {
+        c.fillStyle = s.bg1;
+        c.fillRect(0, 0, size, size);
+        const bw = Math.max(8, Math.min(48, s.param1));
+        const r = (s.radius / 100) * size;
+        c.save();
+        roundedRectPath(c, bw / 2, bw / 2, size - bw, size - bw, Math.max(0, r - bw / 2));
+        c.lineWidth = bw;
+        c.strokeStyle = s.bg2;
+        c.stroke();
+        c.restore();
+      } else if (s.transform === 'conic') {
+        if (typeof c.createConicGradient === 'function') {
+          const cg = c.createConicGradient(rad, cx, cy);
+          const midStop = 0.25 + p2 * 0.25;
+          cg.addColorStop(0, s.bg1);
+          cg.addColorStop(midStop, s.useThird ? s.bg3 : s.bg2);
+          cg.addColorStop(0.5 + p2 * 0.15, s.bg2);
+          cg.addColorStop(1, s.bg1);
+          c.fillStyle = cg;
+        } else {
+          const g = c.createLinearGradient(0, 0, size, size);
+          g.addColorStop(0, s.bg1);
+          g.addColorStop(1, s.bg2);
+          c.fillStyle = g;
+        }
+        c.fillRect(0, 0, size, size);
+      } else if (s.transform === 'spotlight') {
+        c.fillStyle = s.bg2;
+        c.fillRect(0, 0, size, size);
+        const sx = cx + Math.cos(rad) * size * 0.16;
+        const sy = cy + Math.sin(rad) * size * 0.16;
+        const sr = size * (0.38 + p2 * 0.48);
+        const sg = c.createRadialGradient(sx, sy, size * 0.03, sx, sy, sr);
+        sg.addColorStop(0, s.useThird ? s.bg3 : s.bg1);
+        sg.addColorStop(0.45, s.bg1);
+        sg.addColorStop(1, hexToRgba(s.bg2, 0));
+        c.fillStyle = sg;
+        c.fillRect(0, 0, size, size);
+        // Subtle outer vignette
+        const vig = c.createRadialGradient(cx, cy, size * 0.32, cx, cy, size * 0.78);
+        vig.addColorStop(0, 'rgba(0,0,0,0)');
+        vig.addColorStop(1, 'rgba(0,0,0,0.34)');
+        c.fillStyle = vig;
+        c.fillRect(0, 0, size, size);
+      } else if (s.transform === 'grain') {
+        const dx = Math.cos(rad) * size * 0.5;
+        const dy = Math.sin(rad) * size * 0.5;
+        const g = c.createLinearGradient(cx - dx, cy - dy, cx + dx, cy + dy);
+        g.addColorStop(0, s.bg1);
+        if (s.useThird) g.addColorStop(0.5, s.bg3);
+        g.addColorStop(1, s.bg2);
+        c.fillStyle = g;
+        c.fillRect(0, 0, size, size);
+
+        // Cached 128x128 film grain tile
+        if (!drawBackground._grainTile) {
+          const tile = document.createElement('canvas');
+          tile.width = 128;
+          tile.height = 128;
+          const tctx = tile.getContext('2d');
+          const img = tctx.createImageData(128, 128);
+          for (let i = 0; i < img.data.length; i += 4) {
+            const v = Math.floor(Math.random() * 255);
+            img.data[i] = v;
+            img.data[i + 1] = v;
+            img.data[i + 2] = v;
+            img.data[i + 3] = 28;
+          }
+          tctx.putImageData(img, 0, 0);
+          drawBackground._grainTile = tile;
+        }
+        c.save();
+        c.globalAlpha = 0.25 + p2 * 0.75;
+        c.fillStyle = c.createPattern(drawBackground._grainTile, 'repeat');
+        c.fillRect(0, 0, size, size);
+        c.restore();
+      } else if (s.transform === 'split') {
+        const dx = Math.cos(rad) * size * 0.55;
+        const dy = Math.sin(rad) * size * 0.55;
+        const g = c.createLinearGradient(cx - dx, cy - dy, cx + dx, cy + dy);
+        const feather = Math.max(0.002, (p2 - 0.1) * 0.45);
+        g.addColorStop(0, s.bg1);
+        g.addColorStop(Math.max(0, 0.5 - feather), s.bg1);
+        if (s.useThird && feather > 0.04) g.addColorStop(0.5, s.bg3);
+        g.addColorStop(Math.min(1, 0.5 + feather), s.bg2);
+        g.addColorStop(1, s.bg2);
+        c.fillStyle = g;
+        c.fillRect(0, 0, size, size);
+      } else if (s.transform === 'innerglow') {
+        const dx = Math.cos(rad) * size * 0.5;
+        const dy = Math.sin(rad) * size * 0.5;
+        const g = c.createLinearGradient(cx - dx, cy - dy, cx + dx, cy + dy);
+        g.addColorStop(0, s.bg1);
+        g.addColorStop(1, s.bg2);
+        c.fillStyle = g;
+        c.fillRect(0, 0, size, size);
+
+        // Soft inner glow / bevel along edges
+        const rPx = (s.radius / 100) * size;
+        c.save();
+        roundedRectPath(c, size * 0.02, size * 0.02, size * 0.96, size * 0.96, Math.max(0, rPx - size * 0.02));
+        c.lineWidth = size * (0.04 + p2 * 0.08);
+        c.strokeStyle = hexToRgba(s.useThird ? s.bg3 : '#FFFFFF', 0.18 + p2 * 0.26);
+        c.shadowColor = hexToRgba(s.useThird ? s.bg3 : '#FFFFFF', 0.45);
+        c.shadowBlur = size * (0.04 + p2 * 0.06);
+        c.stroke();
+        c.restore();
+      } else if (s.transform === 'dotgrid') {
+        const g = c.createLinearGradient(0, 0, size, size);
+        g.addColorStop(0, s.bg1);
+        if (s.useThird) g.addColorStop(0.55, s.bg3);
+        g.addColorStop(1, s.bg2);
+        c.fillStyle = g;
+        c.fillRect(0, 0, size, size);
+
+        const step = Math.max(16, Math.min(48, Math.round(s.param1))) * (size / 1024);
+        const dotR = Math.max(1.2, step * 0.11);
+        c.save();
+        c.fillStyle = `rgba(255,255,255,${0.06 + p2 * 0.24})`;
+        for (let y = step / 2; y < size; y += step) {
+          for (let x = step / 2; x < size; x += step) {
+            c.beginPath();
+            c.arc(x, y, dotR, 0, Math.PI * 2);
+            c.fill();
+          }
+        }
+        c.restore();
+      }
+    }
+
+    function hexToRgba(hex, alpha) {
+      const clean = hex.replace('#', '');
+      const num = parseInt(clean.length === 3 ? clean.split('').map(x => x + x).join('') : clean, 16);
+      const r = (num >> 16) & 255;
+      const g = (num >> 8) & 255;
+      const b = num & 255;
+      return `rgba(${r},${g},${b},${alpha})`;
+    }
+
+    // Draw Cat Head & Play Button
+    function drawCatAndPlay(c, size = 1024) {
+      const s = state;
+      c.save();
+      c.translate(size / 2, size / 2);
+      const scaleFactor = (s.scale / 100) * (size / 1024);
+      c.scale(scaleFactor, scaleFactor);
+      c.translate(-512, -512);
+
+      if (s.glow) {
+        c.shadowColor = 'rgba(0, 0, 0, 0.22)';
+        c.shadowBlur = 24;
+        c.shadowOffsetY = 10;
+      }
+
+      c.lineJoin = 'round';
+      c.lineCap = 'round';
+      c.lineWidth = s.stroke;
+      c.strokeStyle = s.line;
+
+      // Cat Head Geometry (1024x1024 space)
+      if (s.catStyle === 'tail') {
+        c.save();
+        if (s.tailDir === 'right') {
+          c.translate(512, 0);
+          c.scale(-1, 1);
+          c.translate(-512, 0);
+        }
+        c.beginPath();
+        c.moveTo(263, 392);
+        c.quadraticCurveTo(272, 275, 286, 238);
+        c.quadraticCurveTo(295, 218, 315, 230);
+        c.lineTo(418, 304);
+        c.quadraticCurveTo(512, 292, 606, 304);
+        c.lineTo(709, 230);
+        c.quadraticCurveTo(729, 218, 738, 238);
+        c.quadraticCurveTo(752, 275, 761, 368);
+        c.quadraticCurveTo(759, 392, 770, 412);
+        c.bezierCurveTo(835, 515, 815, 685, 675, 755);
+        c.quadraticCurveTo(512, 808, 349, 755);
+        c.bezierCurveTo(278, 728, 255, 650, 212, 650);
+        c.bezierCurveTo(175, 650, 162, 688, 178, 718);
+        c.stroke();
+
+        if (s.tailArc) {
+          c.beginPath();
+          c.moveTo(222, 468);
+          c.quadraticCurveTo(205, 522, 212, 578);
+          c.stroke();
+        }
+        c.restore();
+      } else if (s.catStyle === 'open') {
+        c.beginPath();
+        // Left lower cheek -> up to left ear -> forehead -> right ear -> right lower cheek
+        c.moveTo(278, 742);
+        c.bezierCurveTo(188, 635, 198, 495, 254, 412);
+        // Left cheek-ear step
+        c.quadraticCurveTo(265, 392, 263, 368);
+        // Left ear up
+        c.quadraticCurveTo(272, 275, 286, 238);
+        c.quadraticCurveTo(295, 218, 315, 230);
+        // Left ear inner slope
+        c.lineTo(418, 304);
+        // Forehead curve
+        c.quadraticCurveTo(512, 292, 606, 304);
+        // Right ear inner slope
+        c.lineTo(709, 230);
+        c.quadraticCurveTo(729, 218, 738, 238);
+        // Right ear down
+        c.quadraticCurveTo(752, 275, 761, 368);
+        // Right cheek-ear step
+        c.quadraticCurveTo(759, 392, 770, 412);
+        // Right cheek down
+        c.bezierCurveTo(826, 495, 836, 635, 746, 742);
+        c.stroke();
+      } else {
+        // Closed cat head path (used for 'closed' and 'filled')
+        c.beginPath();
+        c.moveTo(254, 412);
+        c.quadraticCurveTo(265, 392, 263, 368);
+        c.quadraticCurveTo(272, 275, 286, 238);
+        c.quadraticCurveTo(295, 218, 315, 230);
+        c.lineTo(418, 304);
+        c.quadraticCurveTo(512, 292, 606, 304);
+        c.lineTo(709, 230);
+        c.quadraticCurveTo(729, 218, 738, 238);
+        c.quadraticCurveTo(752, 275, 761, 368);
+        c.quadraticCurveTo(759, 392, 770, 412);
+        c.bezierCurveTo(835, 515, 815, 685, 675, 755);
+        c.quadraticCurveTo(512, 808, 349, 755);
+        c.bezierCurveTo(209, 685, 189, 515, 254, 412);
+        c.closePath();
+
+        if (s.catStyle === 'filled') {
+          c.fillStyle = s.line;
+          c.fill();
+        } else {
+          c.stroke();
+        }
+      }
+
+      // Play Triangle (rounded equilateral pointing right)
+      const pTop = { x: 446, y: 428 };
+      const pRight = { x: 618, y: 530 };
+      const pBot = { x: 446, y: 632 };
+      const cr = 22;
+
+      function drawRoundedTri(pts, r) {
+        c.beginPath();
+        for (let i = 0; i < 3; i++) {
+          const p0 = pts[(i + 2) % 3];
+          const p1 = pts[i];
+          const p2 = pts[(i + 1) % 3];
+          const v1x = p0.x - p1.x, v1y = p0.y - p1.y;
+          const v2x = p2.x - p1.x, v2y = p2.y - p1.y;
+          const l1 = Math.hypot(v1x, v1y), l2 = Math.hypot(v2x, v2y);
+          const a = { x: p1.x + (v1x / l1) * r, y: p1.y + (v1y / l1) * r };
+          const b = { x: p1.x + (v2x / l2) * r, y: p1.y + (v2y / l2) * r };
+          if (i === 0) c.moveTo(a.x, a.y);
+          else c.lineTo(a.x, a.y);
+          c.quadraticCurveTo(p1.x, p1.y, b.x, b.y);
+        }
+        c.closePath();
+      }
+
+      drawRoundedTri([pTop, pRight, pBot], cr);
+      if (s.playStyle === 'solid') {
+        c.fillStyle = s.play;
+        c.fill();
+      } else {
+        c.strokeStyle = s.play;
+        c.lineWidth = Math.max(12, s.stroke * 0.92);
+        c.stroke();
+      }
+
+      // Cute Cat Mouth ('w' shape)
+      if (s.mouth) {
+        c.beginPath();
+        c.moveTo(418, 668);
+        c.quadraticCurveTo(465, 718, 512, 658);
+        c.quadraticCurveTo(559, 718, 606, 668);
+        c.strokeStyle = s.catStyle === 'filled' ? s.play : s.line;
+        c.lineWidth = Math.max(14, s.stroke * 0.72);
+        c.stroke();
+      }
+
+      c.restore();
+    }
+
+    function renderIconToCanvas(targetCanvas) {
+      const size = targetCanvas.width;
+      const c = targetCanvas.getContext('2d');
+      c.clearRect(0, 0, size, size);
+
+      const radiusPx = (state.radius / 100) * size;
+      c.save();
+      roundedRectPath(c, 0, 0, size, size, radiusPx);
+      c.clip();
+
+      if (!state.transparentBg) {
+        drawBackground(c, size);
+      }
+      drawCatAndPlay(c, size);
+
+      // Glass Rim Highlight
+      if (state.rim && !state.transparentBg) {
+        roundedRectPath(c, size * 0.008, size * 0.008, size * 0.984, size * 0.984, Math.max(0, radiusPx - size * 0.008));
+        const rimGrad = c.createLinearGradient(0, 0, size, size);
+        rimGrad.addColorStop(0, 'rgba(255,255,255,0.65)');
+        rimGrad.addColorStop(0.5, 'rgba(255,255,255,0.12)');
+        rimGrad.addColorStop(1, 'rgba(255,255,255,0.45)');
+        c.strokeStyle = rimGrad;
+        c.lineWidth = Math.max(2, size * 0.012);
+        c.stroke();
+      }
+
+      c.restore();
+    }
+
+    function renderAll() {
+      renderIconToCanvas(canvas);
+      renderIconToCanvas($('mini120'));
+      renderIconToCanvas($('mini60'));
+      renderIconToCanvas($('mini32'));
+    }
+
+    function buildPresets() {
+      const grid = $('presetGrid');
+      grid.innerHTML = '';
+      PRESETS.forEach(p => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.dataset.id = p.id;
+        btn.className = 'preset-item group flex flex-col items-center gap-1.5 p-2 rounded-xl border transition text-center';
+        const swatchStyle = p.transform === 'outline'
+          ? `background:${p.bg1}; border:2px solid ${p.bg2};`
+          : `background:linear-gradient(135deg, ${p.bg1}, ${p.bg2});`;
+        btn.innerHTML = `
+          <div class="w-10 h-10 rounded-xl shadow-inner flex items-center justify-center" style="${swatchStyle}">
+            <span class="text-[11px] font-bold" style="color:${p.line}">▶</span>
+          </div>
+          <span class="text-[11px] font-medium text-slate-200 leading-tight">${p.name}</span>
+        `;
+        btn.addEventListener('click', () => applyPreset(p.id));
+        grid.appendChild(btn);
+      });
+    }
+
+    function applyPreset(id) {
+      const p = PRESETS.find(x => x.id === id);
+      if (!p) return;
+      const keepRadius = state.radius;
+      const keepTransparent = state.transparentBg;
+      Object.assign(state, p, { radius: keepRadius, transparentBg: keepTransparent, activePreset: id });
+      syncUIFromState();
+      renderAll();
+    }
+
+    function syncUIFromState() {
+      $('activeThemeLabel').textContent = PRESETS.find(x => x.id === state.activePreset)?.name || '自定义';
+
+      // Preset highlight
+      document.querySelectorAll('.preset-item').forEach(el => {
+        const active = el.dataset.id === state.activePreset;
+        el.className = `preset-item group flex flex-col items-center gap-1.5 p-2 rounded-xl border transition text-center ${
+          active ? 'bg-blue-600/20 border-blue-500/70' : 'bg-white/5 border-white/10 hover:bg-white/10'
+        }`;
+      });
+
+      // Transform tabs
+      document.querySelectorAll('.tx-btn').forEach(el => {
+        const active = el.dataset.type === state.transform;
+        el.className = `tx-btn px-3 py-2 rounded-xl text-xs font-medium border text-left transition ${
+          active ? 'bg-blue-600/20 border-blue-500 text-white' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+        }`;
+      });
+
+      const meta = TRANSFORM_META[state.transform];
+      $('transformDesc').textContent = meta.desc;
+      $('param1Label').textContent = meta.p1;
+      $('param1').max = meta.p1Max;
+      if (state.param1 > meta.p1Max) state.param1 = meta.p1Max;
+      $('param1').value = state.param1;
+      $('param1Val').textContent = state.param1 + meta.p1Unit;
+
+      $('param2Label').textContent = meta.p2;
+      $('param2').value = state.param2;
+      $('param2Val').textContent = state.param2 + meta.p2Unit;
+
+      // Colors
+      $('colBg1').value = state.bg1;
+      $('hexBg1').value = state.bg1.toUpperCase();
+      $('colBg2').value = state.bg2;
+      $('hexBg2').value = state.bg2.toUpperCase();
+      $('colBg3').value = state.bg3;
+      $('hexBg3').value = state.bg3.toUpperCase();
+      $('colLine').value = state.line;
+      $('hexLine').value = state.line.toUpperCase();
+      $('colPlay').value = state.play;
+      $('hexPlay').value = state.play.toUpperCase();
+
+      $('chkUseThirdColor').checked = state.useThird;
+      $('bg3Wrap').classList.toggle('opacity-40', !state.useThird);
+
+      // Cat & Play buttons
+      document.querySelectorAll('.cat-style-btn').forEach(el => {
+        const active = el.dataset.cat === state.catStyle;
+        el.className = `cat-style-btn py-1.5 rounded-lg text-xs border transition ${
+          active ? 'bg-blue-600/25 border-blue-500 text-white font-medium' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+        }`;
+      });
+      document.querySelectorAll('.play-style-btn').forEach(el => {
+        const active = el.dataset.play === state.playStyle;
+        el.className = `play-style-btn py-1.5 rounded-lg text-xs border transition ${
+          active ? 'bg-blue-600/25 border-blue-500 text-white font-medium' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+        }`;
+      });
+
+      // Sliders & checkboxes
+      $('rngStroke').value = state.stroke;
+      $('strokeVal').textContent = state.stroke + 'px';
+      $('rngScale').value = state.scale;
+      $('scaleVal').textContent = state.scale + '%';
+      $('rngRadius').value = state.radius;
+      $('radiusVal').textContent = state.radius + '%';
+
+      $('chkTransparentBg').checked = state.transparentBg;
+      $('chkMouth').checked = state.mouth;
+      $('chkRim').checked = state.rim;
+      $('chkGlow').checked = state.glow;
+      $('tailOptionsRow').classList.toggle('hidden', state.catStyle !== 'tail');
+      $('chkTailArc').checked = state.tailArc;
+      document.querySelectorAll('.tail-dir-btn').forEach(el => {
+        const active = el.dataset.taildir === state.tailDir;
+        el.className = `tail-dir-btn px-2.5 py-1 rounded-lg text-xs border transition ${
+          active ? 'bg-blue-600/25 border-blue-500 text-white font-medium' : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+        }`;
+      });
+
+      const activeBtnCls = 'shape-mode-btn py-1.5 px-2 rounded-lg text-xs border transition bg-blue-600/25 border-blue-500 text-white font-medium';
+      const normalBtnCls = 'shape-mode-btn py-1.5 px-2 rounded-lg text-xs border transition bg-white/5 border-white/10 text-slate-300 hover:bg-white/10';
+      $('btnShapeNoBg').className = state.transparentBg ? activeBtnCls : normalBtnCls;
+      $('btnShapeSquircle').className = (!state.transparentBg && state.radius > 0) ? activeBtnCls : normalBtnCls;
+      $('btnShapeSquare').className = (!state.transparentBg && state.radius === 0) ? activeBtnCls : normalBtnCls;
+    }
+
+    function bindColorPair(colId, hexId, key) {
+      const colEl = $(colId);
+      const hexEl = $(hexId);
+      colEl.addEventListener('input', () => {
+        state[key] = colEl.value.toUpperCase();
+        hexEl.value = state[key];
+        state.activePreset = 'custom';
+        $('activeThemeLabel').textContent = '自定义';
+        renderAll();
+      });
+      hexEl.addEventListener('input', () => {
+        const val = hexEl.value.trim();
+        if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+          state[key] = val.toUpperCase();
+          colEl.value = val;
+          state.activePreset = 'custom';
+          $('activeThemeLabel').textContent = '自定义';
+          renderAll();
+        }
+      });
+    }
+
+    function exportPng(exportSize) {
+      const off = document.createElement('canvas');
+      off.width = exportSize;
+      off.height = exportSize;
+      renderIconToCanvas(off);
+      const url = off.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `catplay-icon-${exportSize}x${exportSize}.png`;
+      a.click();
+      showToast(`已导出 ${exportSize}×${exportSize} PNG 图标`);
+    }
+
+    async function exportIco() {
+      const sizes = [16, 24, 32, 48, 256];
+      const pngBuffers = await Promise.all(sizes.map(sz => new Promise((resolve) => {
+        const off = document.createElement('canvas');
+        off.width = sz;
+        off.height = sz;
+        renderIconToCanvas(off);
+        off.toBlob(async (blob) => {
+          const buf = await blob.arrayBuffer();
+          resolve({ size: sz, bytes: new Uint8Array(buf) });
+        }, 'image/png');
+      })));
+
+      const headerSize = 6 + sizes.length * 16;
+      const totalSize = headerSize + pngBuffers.reduce((acc, p) => acc + p.bytes.length, 0);
+      const ico = new Uint8Array(totalSize);
+      const view = new DataView(ico.buffer);
+
+      // ICONDIR
+      view.setUint16(0, 0, true);
+      view.setUint16(2, 1, true);
+      view.setUint16(4, sizes.length, true);
+
+      let offset = headerSize;
+      pngBuffers.forEach((p, idx) => {
+        const entryOffset = 6 + idx * 16;
+        const dim = p.size >= 256 ? 0 : p.size;
+        view.setUint8(entryOffset + 0, dim);
+        view.setUint8(entryOffset + 1, dim);
+        view.setUint8(entryOffset + 2, 0);
+        view.setUint8(entryOffset + 3, 0);
+        view.setUint16(entryOffset + 4, 1, true);
+        view.setUint16(entryOffset + 6, 32, true);
+        view.setUint32(entryOffset + 8, p.bytes.length, true);
+        view.setUint32(entryOffset + 12, offset, true);
+        ico.set(p.bytes, offset);
+        offset += p.bytes.length;
+      });
+
+      const blob = new Blob([ico], { type: 'image/x-icon' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'catplay-icon.ico';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('已导出多尺寸 Windows .ico（16/24/32/48/256px）');
+    }
+
+    function exportSvg() {
+      // Export clean vector SVG (using canvas-rendered background image if mesh/spread, or pure SVG gradients for linear/radial/outline)
+      const s = state;
+      const r = (s.radius / 100) * 1024;
+      const bgCanvas = document.createElement('canvas');
+      bgCanvas.width = 1024;
+      bgCanvas.height = 1024;
+      const bgCtx = bgCanvas.getContext('2d');
+      roundedRectPath(bgCtx, 0, 0, 1024, 1024, r);
+      bgCtx.clip();
+      drawBackground(bgCtx, 1024);
+      const bgDataUrl = bgCanvas.toDataURL('image/png');
+
+      const tailMainPath = `M 263 392 Q 272 275 286 238 Q 295 218 315 230 L 418 304 Q 512 292 606 304 L 709 230 Q 729 218 738 238 Q 752 275 761 368 Q 759 392 770 412 C 835 515, 815 685, 675 755 Q 512 808 349 755 C 278 728, 255 650, 212 650 C 175 650, 162 688, 178 718`;
+      const catPath = s.catStyle === 'tail'
+        ? tailMainPath
+        : (s.catStyle === 'open'
+          ? `M 278 742 C 188 635, 198 495, 254 412 Q 265 392 263 368 Q 272 275 286 238 Q 295 218 315 230 L 418 304 Q 512 292 606 304 L 709 230 Q 729 218 738 238 Q 752 275 761 368 Q 759 392 770 412 C 826 495, 836 635, 746 742`
+          : `M 254 412 Q 265 392 263 368 Q 272 275 286 238 Q 295 218 315 230 L 418 304 Q 512 292 606 304 L 709 230 Q 729 218 738 238 Q 752 275 761 368 Q 759 392 770 412 C 835 515, 815 685, 675 755 Q 512 808 349 755 C 209 685, 189 515, 254 412 Z`);
+
+      const catAttr = s.catStyle === 'filled'
+        ? `fill="${s.line}" stroke="none"`
+        : `fill="none" stroke="${s.line}" stroke-width="${s.stroke}" stroke-linecap="round" stroke-linejoin="round"`;
+
+      const tailArcSvg = (s.catStyle === 'tail' && s.tailArc)
+        ? `<path d="M 222 468 Q 205 522 212 578" ${catAttr}/>`
+        : '';
+      const catGroupTransform = (s.catStyle === 'tail' && s.tailDir === 'right')
+        ? ` transform="translate(1024,0) scale(-1,1)"`
+        : '';
+
+      const playPath = `M 446 450 L 446 428 Q 446 416 458 422 L 606 518 Q 618 530 606 542 L 458 638 Q 446 644 446 632 Z`;
+      const playAttr = s.playStyle === 'solid'
+        ? `fill="${s.play}" stroke="none"`
+        : `fill="none" stroke="${s.play}" stroke-width="${Math.max(12, s.stroke * 0.92)}" stroke-linejoin="round"`;
+
+      const mouthSvg = s.mouth
+        ? `<path d="M 418 668 Q 465 718 512 658 Q 559 718 606 668" fill="none" stroke="${s.catStyle === 'filled' ? s.play : s.line}" stroke-width="${Math.max(14, s.stroke * 0.72)}" stroke-linecap="round" stroke-linejoin="round"/>`
+        : '';
+
+      const scale = s.scale / 100;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <clipPath id="squircle"><rect width="1024" height="1024" rx="${r}" ry="${r}"/></clipPath>
+  </defs>
+  <g clip-path="url(#squircle)">
+    ${s.transparentBg ? '' : `<image href="${bgDataUrl}" width="1024" height="1024"/>`}
+    <g transform="translate(512,512) scale(${scale}) translate(-512,-512)">
+      <g${catGroupTransform}>
+        <path d="${catPath}" ${catAttr}/>
+        ${tailArcSvg}
+      </g>
+      <path d="${playPath}" ${playAttr}/>
+      ${mouthSvg}
+    </g>
+  </g>
+</svg>`;
+
+      const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'catplay-icon.svg';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('已导出 SVG 矢量图标');
+    }
+
+    // Event bindings
+    function init() {
+      buildPresets();
+
+      document.querySelectorAll('.tx-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.transform = btn.dataset.type;
+          state.activePreset = 'custom';
+          syncUIFromState();
+          renderAll();
+        });
+      });
+
+      $('param1').addEventListener('input', (e) => {
+        state.param1 = Number(e.target.value);
+        $('param1Val').textContent = state.param1 + TRANSFORM_META[state.transform].p1Unit;
+        renderAll();
+      });
+
+      $('param2').addEventListener('input', (e) => {
+        state.param2 = Number(e.target.value);
+        $('param2Val').textContent = state.param2 + TRANSFORM_META[state.transform].p2Unit;
+        renderAll();
+      });
+
+      bindColorPair('colBg1', 'hexBg1', 'bg1');
+      bindColorPair('colBg2', 'hexBg2', 'bg2');
+      bindColorPair('colBg3', 'hexBg3', 'bg3');
+      bindColorPair('colLine', 'hexLine', 'line');
+      bindColorPair('colPlay', 'hexPlay', 'play');
+
+      $('chkUseThirdColor').addEventListener('change', (e) => {
+        state.useThird = e.target.checked;
+        $('bg3Wrap').classList.toggle('opacity-40', !state.useThird);
+        renderAll();
+      });
+
+      $('btnSyncPlay').addEventListener('click', () => {
+        state.play = state.line;
+        $('colPlay').value = state.play;
+        $('hexPlay').value = state.play.toUpperCase();
+        renderAll();
+        showToast('播放键颜色已同步为线条色');
+      });
+
+      document.querySelectorAll('.cat-style-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.catStyle = btn.dataset.cat;
+          syncUIFromState();
+          renderAll();
+        });
+      });
+      document.querySelectorAll('.tail-dir-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.tailDir = btn.dataset.taildir;
+          syncUIFromState();
+          renderAll();
+        });
+      });
+      $('chkTailArc').addEventListener('change', (e) => {
+        state.tailArc = e.target.checked;
+        renderAll();
+      });
+
+      document.querySelectorAll('.play-style-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.playStyle = btn.dataset.play;
+          syncUIFromState();
+          renderAll();
+        });
+      });
+
+      $('rngStroke').addEventListener('input', (e) => {
+        state.stroke = Number(e.target.value);
+        $('strokeVal').textContent = state.stroke + 'px';
+        renderAll();
+      });
+      $('rngScale').addEventListener('input', (e) => {
+        state.scale = Number(e.target.value);
+        $('scaleVal').textContent = state.scale + '%';
+        renderAll();
+      });
+      $('rngRadius').addEventListener('input', (e) => {
+        state.radius = Number(e.target.value);
+        $('radiusVal').textContent = state.radius + '%';
+        renderAll();
+      });
+
+      $('chkTransparentBg').addEventListener('change', (e) => {
+        state.transparentBg = e.target.checked;
+        syncUIFromState();
+        renderAll();
+      });
+      $('btnShapeSquircle').addEventListener('click', () => {
+        state.transparentBg = false;
+        if (state.radius === 0) state.radius = 22;
+        syncUIFromState();
+        renderAll();
+      });
+      $('btnShapeSquare').addEventListener('click', () => {
+        state.transparentBg = false;
+        state.radius = 0;
+        syncUIFromState();
+        renderAll();
+      });
+      $('btnShapeNoBg').addEventListener('click', () => {
+        state.transparentBg = true;
+        syncUIFromState();
+        renderAll();
+      });
+      $('rngRadius').addEventListener('input', () => { syncUIFromState(); });
+      $('chkMouth').addEventListener('change', (e) => { state.mouth = e.target.checked; renderAll(); });
+      $('chkRim').addEventListener('change', (e) => { state.rim = e.target.checked; renderAll(); });
+      $('chkGlow').addEventListener('change', (e) => { state.glow = e.target.checked; renderAll(); });
+
+
+
+      // Swap & Random
+      $('btnSwap').addEventListener('click', () => {
+        const tmp = state.bg1;
+        state.bg1 = state.bg2;
+        state.bg2 = tmp;
+        syncUIFromState();
+        renderAll();
+        showToast('已互换背景主辅色');
+      });
+
+      const HARMONIOUS_PALETTES = [
+        { bg1: '#0F172A', bg2: '#1D4ED8', bg3: '#38BDF8' }, // 极夜深蓝
+        { bg1: '#1E1B4B', bg2: '#4F46E5', bg3: '#818CF8' }, // 靛紫星云
+        { bg1: '#3B0764', bg2: '#7E22CE', bg3: '#C084FC' }, // 暮光紫罗兰
+        { bg1: '#4C0519', bg2: '#BE123C', bg3: '#FB7185' }, // 玫瑰红酒
+        { bg1: '#7C2D12', bg2: '#EA580C', bg3: '#FDBA74' }, // 琥珀落日
+        { bg1: '#064E3B', bg2: '#059669', bg3: '#34D399' }, // 翡翠森系
+        { bg1: '#134E4A', bg2: '#0D9488', bg3: '#5EEAD4' }, // 湖水青绿
+        { bg1: '#164E63', bg2: '#0284C7', bg3: '#7DD3FC' }, // 冰川海蓝
+        { bg1: '#F472B6', bg2: '#DB2777', bg3: '#FBCFE8' }, // 樱花粉雾
+        { bg1: '#FB7185', bg2: '#F59E0B', bg3: '#FDE68A' }, // 蜜桃暖阳
+        { bg1: '#60A5FA', bg2: '#6366F1', bg3: '#C7D2FE' }, // 晴空薰衣草
+        { bg1: '#34D399', bg2: '#0EA5E9', bg3: '#A7F3D0' }, // 薄荷海风
+        { bg1: '#18181B', bg2: '#3F3F46', bg3: '#71717A' }, // 极简黑曜
+        { bg1: '#1E293B', bg2: '#475569', bg3: '#94A3B8' }  // 钛金灰蓝
+      ];
+      let lastPaletteIdx = -1;
+
+      $('btnRandom').addEventListener('click', () => {
+        const hslToHex = (h, s, l) => {
+          h = ((h % 360) + 360) % 360;
+          s = Math.max(0, Math.min(100, s));
+          l = Math.max(0, Math.min(100, l));
+          l /= 100;
+          const a = s * Math.min(l, 1 - l) / 100;
+          const f = n => {
+            const k = (n + h / 30) % 12;
+            const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+            return Math.round(255 * color).toString(16).padStart(2, '0');
+          };
+          return `#${f(0)}${f(8)}${f(4)}`.toUpperCase();
+        };
+
+        // 70% curated harmonious palettes, 30% tight analogous generator (avoiding muddy olive/neon clashes)
+        if (Math.random() < 0.7) {
+          let idx;
+          do {
+            idx = Math.floor(Math.random() * HARMONIOUS_PALETTES.length);
+          } while (idx === lastPaletteIdx);
+          lastPaletteIdx = idx;
+          const p = HARMONIOUS_PALETTES[idx];
+          if (state.transform === 'outline') {
+            state.bg1 = '#FFFFFF';
+            state.bg2 = p.bg2;
+            state.bg3 = p.bg3;
+            state.line = p.bg2;
+            state.play = state.catStyle === 'filled' ? '#FFFFFF' : p.bg2;
+          } else {
+            state.bg1 = p.bg1;
+            state.bg2 = p.bg2;
+            state.bg3 = p.bg3;
+            state.line = '#FFFFFF';
+            state.play = '#FFFFFF';
+          }
+        } else {
+          // Pick pleasant hue ranges (skip muddy yellow-brown/olive 45-130° darks)
+          const pleasantHues = [195, 210, 225, 245, 265, 285, 330, 348, 12, 165];
+          const baseHue = pleasantHues[Math.floor(Math.random() * pleasantHues.length)] + (Math.random() * 14 - 7);
+          const shift = 14 + Math.random() * 14; // Tight analogous shift (14°~28°)
+          if (state.transform === 'outline') {
+            const mainCol = hslToHex(baseHue, 74, 58);
+            state.bg1 = '#FFFFFF';
+            state.bg2 = mainCol;
+            state.bg3 = hslToHex(baseHue + shift, 78, 76);
+            state.line = mainCol;
+            state.play = state.catStyle === 'filled' ? '#FFFFFF' : mainCol;
+          } else {
+            state.bg1 = hslToHex(baseHue, 68, 20);
+            state.bg2 = hslToHex(baseHue + shift, 74, 46);
+            state.bg3 = hslToHex(baseHue + shift * 1.4, 78, 64);
+            state.line = '#FFFFFF';
+            state.play = '#FFFFFF';
+          }
+        }
+
+        state.activePreset = 'custom';
+        syncUIFromState();
+        renderAll();
+        showToast('已生成和谐随机配色');
+      });
+
+      $('btnExportPng').addEventListener('click', () => exportPng(1024));
+      $('btnExportSvg').addEventListener('click', exportSvg);
+      $('btnExportIco').addEventListener('click', exportIco);
+      document.querySelectorAll('.export-size-btn').forEach(btn => {
+        btn.addEventListener('click', () => exportPng(Number(btn.dataset.size)));
+      });
+
+      syncUIFromState();
+      renderAll();
+    }
+
+    init();
+  </script>
+</body>
+</html>

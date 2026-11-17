@@ -3,6 +3,7 @@
 CatPaw UZN 文档体系与服务端运行组件仓库。
 
 > 📖 **在线静态文档站点**：[https://yyds678.github.io/catpaw-uzn/](https://yyds678.github.io/catpaw-uzn/)
+> 🎨 **App Icon 生成器**：[https://yyds678.github.io/catpaw-uzn/icon-studio.html](https://yyds678.github.io/catpaw-uzn/icon-studio.html)
 
 ---
 
@@ -11,6 +12,7 @@ CatPaw UZN 文档体系与服务端运行组件仓库。
 ```text
 catpaw-uzn/
 ├── docs/                 # VitePress 文档中心（UZN 规范、Source API、Action 协议等）
+│   └── public/           # 静态资源与在线工具（含 icon-studio.html 图标生成器）
 ├── CatPawOpen/           # 运行时服务组件工程
 │   └── nodejs/           # 基于 Fastify 的 Node.js 爬虫服务端
 │       ├── src/spider/   # 爬虫示例（Type 3 原生 / Type 7 Web Demo）
@@ -26,6 +28,7 @@ catpaw-uzn/
 ### 1. 文档开发与预览 (VitePress)
 
 - 静态网站在线地址：[https://yyds678.github.io/catpaw-uzn/](https://yyds678.github.io/catpaw-uzn/)
+- App Icon 生成器：[https://yyds678.github.io/catpaw-uzn/icon-studio.html](https://yyds678.github.io/catpaw-uzn/icon-studio.html)
 
 ```bash
 # 启动本地文档开发服务器
